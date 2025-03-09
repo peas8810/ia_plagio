@@ -7,7 +7,7 @@ from io import BytesIO
 import hashlib
 
 # 🔗 URL da API gerada no Google Sheets
-URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbw-FHvvPe5vv98AYQBmKAlt68TVH0S_vdaHA5GfVNgECdfR1F0xlYyzbsdo6Wo0Nas/exec"
+URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbyTpbWDxWkNRh_ZIlHuAVwZaCC2ODqTmo0Un7ZDbgzrVQBmxlYYKuoYf6yDigAPHZiZ/exec"
 
 # =============================
 # 📋 Função para Salvar E-mails e Código de Verificação no Google Sheets
