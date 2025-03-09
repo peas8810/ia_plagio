@@ -6,9 +6,12 @@ from fpdf import FPDF
 from io import BytesIO
 import hashlib
 import gspread
+import json
 from google.oauth2.service_account import Credentials
 
-# Configuração do Google Sheets usando Secrets Manager
+# =============================
+# 🔒 Configuração do Google Sheets
+# =============================
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 # Carregar credenciais do secrets manager
@@ -20,30 +23,30 @@ cliente = gspread.authorize(CREDENTIALS)
 SHEET_ID = "1xf00JCVioNn1q5oa_RQyQgXp2Qo1Hs0hUedIb7-xQRw"
 sheet = cliente.open_by_key(SHEET_ID).sheet1
 
-# Função para registrar dados na planilha
+# =============================
+# 📋 Funções Auxiliares
+# =============================
+
+# Registrar dados na planilha
 def registrar_dados(nome, email):
     sheet.append_row([nome, email])
 
-# Função para gerar um código de verificação único
+# Gerar um código de verificação único
 def gerar_codigo_verificacao(texto):
     return hashlib.md5(texto.encode()).hexdigest()[:10].upper()
 
-# Função para extrair texto de um arquivo PDF
+# Extrair texto de um arquivo PDF
 def extrair_texto_pdf(arquivo_pdf):
     leitor_pdf = PyPDF2.PdfReader(arquivo_pdf)
-    texto = ""
-    for pagina in leitor_pdf.pages:
-        texto += pagina.extract_text() or ""
-    return texto.strip()
+    return "".join([pagina.extract_text() or "" for pagina in leitor_pdf.pages]).strip()
 
-# Função para calcular a similaridade entre dois textos
+# Calcular a similaridade entre dois textos
 def calcular_similaridade(texto1, texto2):
-    seq_matcher = difflib.SequenceMatcher(None, texto1, texto2)
-    return seq_matcher.ratio()
+    return difflib.SequenceMatcher(None, texto1, texto2).ratio()
 
-# Função para buscar artigos na API da CrossRef
+# Buscar artigos na API da CrossRef
 def buscar_referencias_crossref(texto):
-    query = "+".join(texto.split()[:10])  
+    query = "+".join(texto.split()[:10])
     url = f"https://api.crossref.org/works?query={query}&rows=10"
 
     try:
@@ -54,54 +57,53 @@ def buscar_referencias_crossref(texto):
         st.error(f"Erro ao acessar a API da CrossRef: {e}")
         return []
 
-    referencias = []
-    for item in data.get("message", {}).get("items", []):
-        titulo = item.get("title", ["Título não disponível"])[0]
-        resumo = item.get("abstract", "")
-        link = item.get("URL", "Link não disponível")
-        referencias.append({"titulo": titulo, "resumo": resumo, "link": link})
+    referencias = [
+        {
+            "titulo": item.get("title", ["Título não disponível"])[0],
+            "resumo": item.get("abstract", ""),
+            "link": item.get("URL", "Link não disponível"),
+        }
+        for item in data.get("message", {}).get("items", [])
+    ]
 
     return referencias
 
-# Função para gerar relatório PDF
+# Gerar relatório PDF
 def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     pdf.set_font("Arial", size=12)
 
-    pdf.cell(200, 10, txt="Relatório de Similaridade de Plágio", ln=True, align='C')
+    pdf.cell(200, 10, "Relatório de Similaridade de Plágio", ln=True, align='C')
     pdf.ln(10)
 
-    pdf.cell(200, 10, txt="Top 5 Referências encontradas:", ln=True)
+    pdf.cell(200, 10, "Top 5 Referências encontradas:", ln=True)
     pdf.ln(5)
 
-    soma_percentual = 0
+    soma_percentual = sum(perc for _, perc, _ in referencias_com_similaridade[:5])
     for i, (ref, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
-        soma_percentual += perc
         pdf.multi_cell(0, 10, f"{i}. {ref} - {perc*100:.2f}%\n{link}")
         pdf.ln(2)
 
-    # Cálculo do plágio médio
     plágio_medio = (soma_percentual / 5) * 100
     pdf.ln(5)
-    pdf.cell(200, 10, txt=f"Plágio médio: {plágio_medio:.2f}%", ln=True)
-
-    # Código de verificação
+    pdf.cell(200, 10, f"Plágio médio: {plágio_medio:.2f}%", ln=True)
     pdf.ln(10)
-    pdf.cell(200, 10, txt=f"Código de Verificação: {codigo_verificacao}", ln=True)
+    pdf.cell(200, 10, f"Código de Verificação: {codigo_verificacao}", ln=True)
 
-    # Salvar PDF
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
     pdf.output(pdf_file_path)
 
     return pdf_file_path
 
-# Interface do Streamlit
+# =============================
+# 💻 Interface do Streamlit
+# =============================
 if __name__ == "__main__":
-    st.title("Verificador de Plágio - IA NICE - CrossRef")
+    st.title("🔎 Verificador de Plágio - IA NICE - CrossRef")
 
-    # Formulário para coleta de dados
+    # 📋 Formulário para coleta de dados
     with st.form("formulario_usuario"):
         nome = st.text_input("Nome completo")
         email = st.text_input("E-mail")
@@ -114,7 +116,7 @@ if __name__ == "__main__":
         else:
             st.error("❌ Por favor, preencha todos os campos.")
 
-    # Upload do PDF após registro
+    # 📂 Upload do PDF após registro
     arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF", type=["pdf"])
 
     if st.button("Processar PDF") and nome and email:
@@ -122,17 +124,15 @@ if __name__ == "__main__":
             texto_usuario = extrair_texto_pdf(arquivo_pdf)
             referencias = buscar_referencias_crossref(texto_usuario)
 
-            referencias_com_similaridade = []
-            for ref in referencias:
-                texto_base = ref["titulo"] + " " + ref["resumo"]
-                link = ref["link"]
-                similaridade = calcular_similaridade(texto_usuario, texto_base)
-                referencias_com_similaridade.append((ref["titulo"], similaridade, link))
+            referencias_com_similaridade = [
+                (ref["titulo"], calcular_similaridade(texto_usuario, ref["titulo"] + " " + ref["resumo"]), ref["link"])
+                for ref in referencias
+            ]
 
             referencias_com_similaridade.sort(key=lambda x: x[1], reverse=True)
 
             if referencias_com_similaridade:
-                st.subheader("Top 5 Referências encontradas:")
+                st.subheader("📚 Top 5 Referências encontradas:")
                 for i, (titulo, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
                     st.markdown(f"**{i}.** [{titulo}]({link}) - **{perc*100:.2f}%**")
 
@@ -148,6 +148,6 @@ if __name__ == "__main__":
                 # Exibir código de verificação para o usuário
                 st.success(f"Código de verificação gerado: **{codigo_verificacao}**")
             else:
-                st.warning("Nenhuma referência encontrada.")
+                st.warning("⚠️ Nenhuma referência encontrada.")
         else:
-            st.error("Por favor, carregue um arquivo PDF.")
+            st.error("❌ Por favor, carregue um arquivo PDF.")
