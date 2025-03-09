@@ -144,3 +144,12 @@ if __name__ == "__main__":
                 st.warning("⚠️ Nenhuma referência encontrada.")
         else:
             st.error("❌ Por favor, carregue um arquivo PDF.")
+
+
+# 🔽 Link para download do arquivo CSV com os e-mails registrados
+if st.button("📥 Baixar Lista de E-mails"):
+    try:
+        with open("emails_registrados.csv", "rb") as f:
+            st.download_button("📥 Clique aqui para baixar", f, "emails_registrados.csv", "text/csv")
+    except FileNotFoundError:
+        st.error("❌ Nenhum e-mail foi registrado ainda.")
