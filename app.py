@@ -4,6 +4,13 @@ import difflib
 import requests
 from fpdf import FPDF
 from io import BytesIO
+import hashlib
+import random
+import string
+
+# Função para gerar um código de verificação único
+def gerar_codigo_verificacao(texto):
+    return hashlib.md5(texto.encode()).hexdigest()[:10].upper()
 
 # Função para extrair texto de um arquivo PDF
 def extrair_texto_pdf(arquivo_pdf):
@@ -41,7 +48,7 @@ def buscar_referencias_crossref(texto):
     return referencias
 
 # Função para gerar relatório PDF
-def gerar_relatorio_pdf(referencias_com_similaridade):
+def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -64,11 +71,15 @@ def gerar_relatorio_pdf(referencias_com_similaridade):
     pdf.ln(5)
     pdf.cell(200, 10, txt=f"Plágio médio: {plágio_medio:.2f}%", ln=True)
 
+    # Código de verificação
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=f"Código de Verificação: {codigo_verificacao}", ln=True)
+
     # Salvar PDF
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
     pdf.output(pdf_file_path)
 
-    return pdf_file_path
+    return pdf_file_path, codigo_verificacao
 
 # Interface do Streamlit
 if __name__ == "__main__":
@@ -99,11 +110,26 @@ if __name__ == "__main__":
                 plágio_medio = (sum(perc for _, perc, _ in referencias_com_similaridade[:5]) / 5) * 100
                 st.subheader(f"**Plágio médio: {plágio_medio:.2f}%**")
 
+                # Gerar código de verificação
+                codigo_verificacao = gerar_codigo_verificacao(texto_usuario)
+
                 # Gerar e exibir link para download do relatório
-                pdf_file = gerar_relatorio_pdf(referencias_com_similaridade)
+                pdf_file, _ = gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao)
                 with open(pdf_file, "rb") as f:
                     st.download_button("📄 Baixar Relatório de Plágio", f, "relatorio_plagio.pdf")
+
+                # Exibir código de verificação para o usuário
+                st.success(f"Código de verificação gerado: **{codigo_verificacao}**")
             else:
                 st.warning("Nenhuma referência encontrada.")
         else:
             st.error("Por favor, carregue um arquivo PDF.")
+
+    # Verificação de código
+    st.header("Verificar Autenticidade")
+    codigo_digitado = st.text_input("Digite o código de verificação:")
+    if st.button("Verificar Código"):
+        if codigo_digitado == codigo_verificacao:
+            st.success("✅ Documento Autêntico e Original!")
+        else:
+            st.error("❌ Código inválido ou documento falsificado.")
