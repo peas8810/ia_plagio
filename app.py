@@ -1,4 +1,3 @@
-
 import streamlit as st
 import PyPDF2
 import requests
@@ -12,6 +11,12 @@ def extrair_texto_pdf(arquivo_pdf):
     for pagina in leitor_pdf.pages:
         texto += pagina.extract_text() or ""
     return texto.strip()
+
+# Função para calcular a similaridade entre dois textos
+import difflib
+def calcular_similaridade(texto1, texto2):
+    seq_matcher = difflib.SequenceMatcher(None, texto1, texto2)
+    return seq_matcher.ratio()
 
 # Função para buscar artigos na API da CrossRef
 def buscar_referencias_crossref(texto):
@@ -29,28 +34,32 @@ def buscar_referencias_crossref(texto):
     referencias = []
     for item in data.get("message", {}).get("items", []):
         titulo = item.get("title", ["Título não disponível"])[0]
+        resumo = item.get("abstract", "")
         link = item.get("URL", "Link não disponível")
-        referencias.append((titulo, link))
+        referencias.append({"titulo": titulo, "resumo": resumo, "link": link})
 
     return referencias
 
-# Interface do Streamlit
-if __name__ == "__main__":
-    st.title("Verificador de Plágio - API CrossRef")
+# Função para gerar relatório PDF
+def gerar_relatorio_pdf(referencias_com_similaridade):
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
 
-    arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF", type=["pdf"])
+    pdf.cell(200, 10, txt="Relatório de Similaridade de Plágio", ln=True, align='C')
+    pdf.ln(10)
 
-    if st.button("Processar PDF"):
-        if arquivo_pdf is not None:
-            texto_usuario = extrair_texto_pdf(arquivo_pdf)
-            referencias = buscar_referencias_crossref(texto_usuario)
+    pdf.cell(200, 10, txt="Top 5 Referências encontradas:", ln=True)
+    pdf.ln(5)
 
-            if referencias:
-                st.subheader("Top 5 Referências encontradas:")
-                for i, (titulo, link) in enumerate(referencias[:5], 1):
-                    st.markdown(f"**{i}.** [{titulo}]({link})")
-            else:
-                st.warning("Nenhuma referência encontrada.")
-        else:
-            st.error("Por favor, carregue um arquivo PDF.")
+    soma_percentual = 0
+    for i, (ref, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
+        soma_percentual += perc
+        pdf.multi_cell(0, 10, f"{i}. {ref} - {perc*100:.2f}%\n{link}")
+        pdf.ln(2)
 
+    # Cálculo do plágio médio
+    plágio_medio = (soma_percentual / 5) * 100
+    pdf.ln(5)
+    pdf.cell(
