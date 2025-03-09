@@ -72,7 +72,7 @@ def gerar_relatorio_pdf(referencias_com_similaridade):
 
 # Interface do Streamlit
 if __name__ == "__main__":
-    st.title("Verificador de Plágio - API CrossRef")
+    st.title("Verificador de Plágio - IA NICE - CrossRef")
 
     arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF", type=["pdf"])
 
