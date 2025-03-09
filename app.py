@@ -5,6 +5,19 @@ import requests
 from fpdf import FPDF
 from io import BytesIO
 import hashlib
+import gspread
+from google.oauth2.service_account import Credentials
+
+# Configuração do Google Sheets
+SHEET_ID = "1xf00JCVioNn1q5oa_RQyQgXp2Qo1Hs0hUedIb7-xQRw"
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+CREDENTIALS = Credentials.from_service_account_file("credenciais.json", scopes=SCOPE)
+cliente = gspread.authorize(CREDENTIALS)
+sheet = cliente.open_by_key(SHEET_ID).sheet1
+
+# Função para registrar dados na planilha
+def registrar_dados(nome, email):
+    sheet.append_row([nome, email])
 
 # Função para gerar um código de verificação único
 def gerar_codigo_verificacao(texto):
@@ -83,9 +96,23 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
 if __name__ == "__main__":
     st.title("Verificador de Plágio - IA NICE - CrossRef")
 
+    # Formulário para coleta de dados
+    with st.form("formulario_usuario"):
+        nome = st.text_input("Nome completo")
+        email = st.text_input("E-mail")
+        submit_button = st.form_submit_button("Enviar")
+
+    if submit_button:
+        if nome and email:
+            registrar_dados(nome, email)
+            st.success("✅ Dados registrados com sucesso! Agora você pode fazer o upload do PDF.")
+        else:
+            st.error("❌ Por favor, preencha todos os campos.")
+
+    # Upload do PDF após registro
     arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF", type=["pdf"])
 
-    if st.button("Processar PDF"):
+    if st.button("Processar PDF") and nome and email:
         if arquivo_pdf is not None:
             texto_usuario = extrair_texto_pdf(arquivo_pdf)
             referencias = buscar_referencias_crossref(texto_usuario)
@@ -104,10 +131,6 @@ if __name__ == "__main__":
                 for i, (titulo, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
                     st.markdown(f"**{i}.** [{titulo}]({link}) - **{perc*100:.2f}%**")
 
-                # Cálculo do plágio médio
-                plágio_medio = (sum(perc for _, perc, _ in referencias_com_similaridade[:5]) / 5) * 100
-                st.subheader(f"**Plágio médio: {plágio_medio:.2f}%**")
-
                 # Gerar código de verificação e salvar no session_state
                 codigo_verificacao = gerar_codigo_verificacao(texto_usuario)
                 st.session_state['codigo_verificacao'] = codigo_verificacao
@@ -123,13 +146,3 @@ if __name__ == "__main__":
                 st.warning("Nenhuma referência encontrada.")
         else:
             st.error("Por favor, carregue um arquivo PDF.")
-
-    # Verificação de código
-    st.header("Verificar Autenticidade")
-    codigo_digitado = st.text_input("Digite o código de verificação:")
-
-    if st.button("Verificar Código"):
-        if 'codigo_verificacao' in st.session_state and codigo_digitado == st.session_state['codigo_verificacao']:
-            st.success("✅ Documento Autêntico e Original!")
-        else:
-            st.error("❌ Código inválido ou documento falsificado.")
