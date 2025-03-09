@@ -118,6 +118,10 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
 if __name__ == "__main__":
     st.title("Verificador de Plágio - IA NICE - PEAS.Co")
 
+    # Inicializar session_state para evitar perda de dados
+    if 'codigo_verificacao' not in st.session_state:
+        st.session_state['codigo_verificacao'] = None
+
     st.subheader("📋 Registro de Usuário")
     nome = st.text_input("Nome completo")
     email = st.text_input("E-mail")
@@ -171,7 +175,7 @@ if __name__ == "__main__":
     codigo_digitado = st.text_input("Digite o código de verificação:")
 
     if st.button("Verificar Código"):
-        if 'codigo_verificacao' in st.session_state and codigo_digitado == st.session_state['codigo_verificacao']:
+        if 'codigo_verificacao' in st.session_state and codigo_digitado.strip() == st.session_state['codigo_verificacao']:
             st.success("✅ Documento Autêntico e Original!")
         else:
             st.error("❌ Código inválido ou documento falsificado.")
