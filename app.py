@@ -6,8 +6,8 @@ from fpdf import FPDF
 from io import BytesIO
 import hashlib
 
-# 🔗 URL da API gerada no Google Sheets (insira sua URL aqui)
-URL_GOOGLE_SHEETS = "https://script.google.com/macros/library/d/1_WlLmHJZj4oisSJTKNEtH8KHE923Ok4p4-cr9a0iN2MHBEd9lJNP0yzP/1"
+# 🔗 URL da API gerada no Google Sheets
+URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbxKvnbxiNxQ1QRGbdty5wyXLSXJ7yE8ojY6Ow3XpAfMR3cftzsTwkiyLfeJr4rXsokU/exec"
 
 # =============================
 # 📋 Função para Salvar E-mails no Google Sheets
@@ -22,7 +22,7 @@ def salvar_email_google_sheets(nome, email):
         if response.text.strip() == "Sucesso":
             st.success("✅ E-mail e nome registrados com sucesso!")
         else:
-            st.error("❌ Erro ao salvar dados no Google Sheets.")
+            st.error(f"❌ Erro ao salvar dados no Google Sheets: {response.text}")
     except Exception as e:
         st.error(f"❌ Erro na conexão com o Google Sheets: {e}")
 
@@ -127,3 +127,51 @@ if __name__ == "__main__":
             salvar_email_google_sheets(nome, email)
         else:
             st.warning("⚠️ Por favor, preencha todos os campos.")
+
+    # Upload do PDF após registro
+    arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF", type=["pdf"])
+
+    if st.button("Processar PDF"):
+        if arquivo_pdf is not None:
+            texto_usuario = extrair_texto_pdf(arquivo_pdf)
+            referencias = buscar_referencias_crossref(texto_usuario)
+
+            referencias_com_similaridade = []
+            for ref in referencias:
+                texto_base = ref["titulo"] + " " + ref["resumo"]
+                link = ref["link"]
+                similaridade = calcular_similaridade(texto_usuario, texto_base)
+                referencias_com_similaridade.append((ref["titulo"], similaridade, link))
+
+            referencias_com_similaridade.sort(key=lambda x: x[1], reverse=True)
+
+            if referencias_com_similaridade:
+                st.subheader("Top 5 Referências encontradas:")
+                for i, (titulo, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
+                    st.markdown(f"**{i}.** [{titulo}]({link}) - **{perc*100:.2f}%**")
+
+                # Gerar código de verificação e salvar no session_state
+                codigo_verificacao = gerar_codigo_verificacao(texto_usuario)
+                st.session_state['codigo_verificacao'] = codigo_verificacao
+
+                # Gerar e exibir link para download do relatório
+                pdf_file = gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao)
+                with open(pdf_file, "rb") as f:
+                    st.download_button("📄 Baixar Relatório de Plágio", f, "relatorio_plagio.pdf")
+
+                # Exibir código de verificação para o usuário
+                st.success(f"Código de verificação gerado: **{codigo_verificacao}**")
+            else:
+                st.warning("Nenhuma referência encontrada.")
+        else:
+            st.error("Por favor, carregue um arquivo PDF.")
+
+    # Verificação de código
+    st.header("Verificar Autenticidade")
+    codigo_digitado = st.text_input("Digite o código de verificação:")
+
+    if st.button("Verificar Código"):
+        if 'codigo_verificacao' in st.session_state and codigo_digitado == st.session_state['codigo_verificacao']:
+            st.success("✅ Documento Autêntico e Original!")
+        else:
+            st.error("❌ Código inválido ou documento falsificado.")
