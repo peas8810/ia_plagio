@@ -1,5 +1,40 @@
-import streamlit as st
 
+import streamlit as st
+import PyPDF2
+import requests
+from fpdf import FPDF
+from io import BytesIO
+
+# Função para extrair texto de um arquivo PDF
+def extrair_texto_pdf(arquivo_pdf):
+    leitor_pdf = PyPDF2.PdfReader(arquivo_pdf)
+    texto = ""
+    for pagina in leitor_pdf.pages:
+        texto += pagina.extract_text() or ""
+    return texto.strip()
+
+# Função para buscar artigos na API da CrossRef
+def buscar_referencias_crossref(texto):
+    query = "+".join(texto.split()[:10])  
+    url = f"https://api.crossref.org/works?query={query}&rows=10"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erro ao acessar a API da CrossRef: {e}")
+        return []
+
+    referencias = []
+    for item in data.get("message", {}).get("items", []):
+        titulo = item.get("title", ["Título não disponível"])[0]
+        link = item.get("URL", "Link não disponível")
+        referencias.append((titulo, link))
+
+    return referencias
+
+# Interface do Streamlit
 if __name__ == "__main__":
     st.title("Verificador de Plágio - API CrossRef")
 
@@ -18,3 +53,4 @@ if __name__ == "__main__":
                 st.warning("Nenhuma referência encontrada.")
         else:
             st.error("Por favor, carregue um arquivo PDF.")
+
