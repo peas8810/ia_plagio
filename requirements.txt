@@ -1,0 +1,5 @@
+%%writefile requirements.txt
+streamlit
+PyPDF2
+requests
+fpdf
