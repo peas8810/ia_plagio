@@ -10,21 +10,36 @@ import hashlib
 URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbw-FHvvPe5vv98AYQBmKAlt68TVH0S_vdaHA5GfVNgECdfR1F0xlYyzbsdo6Wo0Nas/exec"
 
 # =============================
-# 📋 Função para Salvar E-mails no Google Sheets
+# 📋 Função para Salvar E-mails e Código de Verificação no Google Sheets
 # =============================
-def salvar_email_google_sheets(nome, email):
+def salvar_email_google_sheets(nome, email, codigo_verificacao):
     dados = {
         "nome": nome,
-        "email": email
+        "email": email,
+        "codigo": codigo_verificacao
     }
     try:
         response = requests.post(URL_GOOGLE_SHEETS, json=dados)
         if response.text.strip() == "Sucesso":
-            st.success("✅ E-mail e nome registrados com sucesso!")
+            st.success("✅ E-mail, nome e código registrados com sucesso!")
         else:
             st.error(f"❌ Erro ao salvar dados no Google Sheets: {response.text}")
     except Exception as e:
         st.error(f"❌ Erro na conexão com o Google Sheets: {e}")
+
+# =============================
+# 🔎 Função para Verificar Código de Verificação na Planilha
+# =============================
+def verificar_codigo_google_sheets(codigo_digitado):
+    try:
+        response = requests.get(f"{URL_GOOGLE_SHEETS}?codigo={codigo_digitado}")
+        if response.text.strip() == "Valido":
+            return True
+        else:
+            return False
+    except Exception as e:
+        st.error(f"❌ Erro na conexão com o Google Sheets: {e}")
+        return False
 
 # =============================
 # 🔐 Função para Gerar Código de Verificação
@@ -118,17 +133,13 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
 if __name__ == "__main__":
     st.title("Verificador de Plágio - IA NICE - PEAS.Co")
 
-    # Inicializar session_state para evitar perda de dados
-    if 'codigo_verificacao' not in st.session_state:
-        st.session_state['codigo_verificacao'] = None
-
     st.subheader("📋 Registro de Usuário")
     nome = st.text_input("Nome completo")
     email = st.text_input("E-mail")
 
     if st.button("Salvar Dados"):
         if nome and email:
-            salvar_email_google_sheets(nome, email)
+            salvar_email_google_sheets(nome, email, "N/A")
         else:
             st.warning("⚠️ Por favor, preencha todos os campos.")
 
@@ -150,21 +161,15 @@ if __name__ == "__main__":
             referencias_com_similaridade.sort(key=lambda x: x[1], reverse=True)
 
             if referencias_com_similaridade:
-                st.subheader("Top 5 Referências encontradas:")
-                for i, (titulo, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
-                    st.markdown(f"**{i}.** [{titulo}]({link}) - **{perc*100:.2f}%**")
-
-                # Gerar código de verificação e salvar no session_state
                 codigo_verificacao = gerar_codigo_verificacao(texto_usuario)
-                st.session_state['codigo_verificacao'] = codigo_verificacao
+                salvar_email_google_sheets(nome, email, codigo_verificacao)
+
+                st.success(f"Código de verificação gerado: **{codigo_verificacao}**")
 
                 # Gerar e exibir link para download do relatório
                 pdf_file = gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao)
                 with open(pdf_file, "rb") as f:
                     st.download_button("📄 Baixar Relatório de Plágio", f, "relatorio_plagio.pdf")
-
-                # Exibir código de verificação para o usuário
-                st.success(f"Código de verificação gerado: **{codigo_verificacao}**")
             else:
                 st.warning("Nenhuma referência encontrada.")
         else:
@@ -175,7 +180,7 @@ if __name__ == "__main__":
     codigo_digitado = st.text_input("Digite o código de verificação:")
 
     if st.button("Verificar Código"):
-        if 'codigo_verificacao' in st.session_state and codigo_digitado.strip() == st.session_state['codigo_verificacao']:
+        if verificar_codigo_google_sheets(codigo_digitado):
             st.success("✅ Documento Autêntico e Original!")
         else:
             st.error("❌ Código inválido ou documento falsificado.")
