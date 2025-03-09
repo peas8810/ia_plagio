@@ -5,7 +5,7 @@ import requests
 from fpdf import FPDF
 from io import BytesIO
 import hashlib
-import pandas as pd  # 🔥 Biblioteca para manipulação do arquivo CSV
+import pandas as pd
 
 # =============================
 # 📋 Função para Salvar E-mails no CSV
@@ -70,38 +70,43 @@ def buscar_referencias_crossref(texto):
     return referencias
 
 # =============================
-# 📄 Função para Gerar Relatório PDF
+# 📄 Função para Gerar Relatório PDF com Suporte UTF-8
 # =============================
+class PDF(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 16)
+        self.cell(0, 10, "Relatório de Similaridade de Plágio", ln=True, align='C')
+
+    def chapter_title(self, title):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, title, ln=True)
+        self.ln(5)
+
+    def chapter_body(self, body):
+        self.set_font('Arial', '', 10)
+        self.multi_cell(0, 10, body)
+        self.ln()
+
 def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf = PDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
 
-    pdf.cell(200, 10, txt="Relatório de Similaridade de Plágio", ln=True, align='C')
-    pdf.ln(10)
-
-    pdf.cell(200, 10, txt="Top 5 Referências encontradas:", ln=True)
-    pdf.ln(5)
+    pdf.chapter_title("Top 5 Referências encontradas:")
 
     soma_percentual = 0
     for i, (ref, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
         soma_percentual += perc
-        pdf.multi_cell(0, 10, f"{i}. {ref} - {perc*100:.2f}%\n{link}")
-        pdf.ln(2)
+        pdf.chapter_body(f"{i}. {ref} - {perc*100:.2f}%\n{link}")
 
     # Cálculo do plágio médio
     plágio_medio = (soma_percentual / 5) * 100
-    pdf.ln(5)
-    pdf.cell(200, 10, txt=f"Plágio médio: {plágio_medio:.2f}%", ln=True)
+    pdf.chapter_body(f"Plágio médio: {plágio_medio:.2f}%")
 
     # Código de verificação
-    pdf.ln(10)
-    pdf.cell(200, 10, txt=f"Código de Verificação: {codigo_verificacao}", ln=True)
+    pdf.chapter_body(f"Código de Verificação: {codigo_verificacao}")
 
-    # Salvar PDF
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
-    pdf.output(pdf_file_path)
+    pdf.output(pdf_file_path, 'F')
 
     return pdf_file_path
 
