@@ -1,26 +1,30 @@
 import streamlit as st
+import requests
 import PyPDF2
 import difflib
-import requests
 from fpdf import FPDF
 from io import BytesIO
 import hashlib
-import pandas as pd
+
+# 🔗 URL da API gerada no Google Sheets (insira sua URL aqui)
+URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxKvnbxiNxQ1QRGbdty5wyXLSXJ7yE8ojY6Ow3XpAfMR3cftzsTwkiyLfeJr4rXsokU/exec/exec"
 
 # =============================
-# 📋 Função para Salvar E-mails no CSV
+# 📋 Função para Salvar E-mails no Google Sheets
 # =============================
-def salvar_email_csv(nome, email):
-    dados = {"Nome": [nome], "Email": [email]}
+def salvar_email_google_sheets(nome, email):
+    dados = {
+        "nome": nome,
+        "email": email
+    }
     try:
-        df = pd.read_csv("emails_registrados.csv")
-        novo_df = pd.DataFrame(dados)
-        df = pd.concat([df, novo_df], ignore_index=True)
-    except FileNotFoundError:
-        df = pd.DataFrame(dados)
-
-    df.to_csv("emails_registrados.csv", index=False)
-    st.success("✅ E-mail e nome registrados com sucesso!")
+        response = requests.post(URL_GOOGLE_SHEETS, json=dados)
+        if response.text.strip() == "Sucesso":
+            st.success("✅ E-mail e nome registrados com sucesso!")
+        else:
+            st.error("❌ Erro ao salvar dados no Google Sheets.")
+    except Exception as e:
+        st.error(f"❌ Erro na conexão com o Google Sheets: {e}")
 
 # =============================
 # 🔐 Função para Gerar Código de Verificação
@@ -70,7 +74,7 @@ def buscar_referencias_crossref(texto):
     return referencias
 
 # =============================
-# 📄 Função para Gerar Relatório PDF com Suporte UTF-8
+# 📄 Função para Gerar Relatório PDF
 # =============================
 class PDF(FPDF):
     def header(self):
@@ -98,11 +102,9 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
         soma_percentual += perc
         pdf.chapter_body(f"{i}. {ref} - {perc*100:.2f}%\n{link}")
 
-    # Cálculo do plágio médio
     plágio_medio = (soma_percentual / 5) * 100
     pdf.chapter_body(f"Plágio médio: {plágio_medio:.2f}%")
 
-    # Código de verificação
     pdf.chapter_body(f"Código de Verificação: {codigo_verificacao}")
 
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
@@ -116,61 +118,12 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
 if __name__ == "__main__":
     st.title("Verificador de Plágio - IA NICE - CrossRef")
 
-    # Formulário para nome e e-mail
     st.subheader("📋 Registro de Usuário")
     nome = st.text_input("Nome completo")
     email = st.text_input("E-mail")
 
     if st.button("Salvar Dados"):
         if nome and email:
-            salvar_email_csv(nome, email)
+            salvar_email_google_sheets(nome, email)
         else:
             st.warning("⚠️ Por favor, preencha todos os campos.")
-
-    # Upload do PDF após registro
-    arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF", type=["pdf"])
-
-    if st.button("Processar PDF"):
-        if arquivo_pdf is not None:
-            texto_usuario = extrair_texto_pdf(arquivo_pdf)
-            referencias = buscar_referencias_crossref(texto_usuario)
-
-            referencias_com_similaridade = []
-            for ref in referencias:
-                texto_base = ref["titulo"] + " " + ref["resumo"]
-                link = ref["link"]
-                similaridade = calcular_similaridade(texto_usuario, texto_base)
-                referencias_com_similaridade.append((ref["titulo"], similaridade, link))
-
-            referencias_com_similaridade.sort(key=lambda x: x[1], reverse=True)
-
-            if referencias_com_similaridade:
-                st.subheader("Top 5 Referências encontradas:")
-                for i, (titulo, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
-                    st.markdown(f"**{i}.** [{titulo}]({link}) - **{perc*100:.2f}%**")
-
-                # Gerar código de verificação e salvar no session_state
-                codigo_verificacao = gerar_codigo_verificacao(texto_usuario)
-                st.session_state['codigo_verificacao'] = codigo_verificacao
-
-                # Gerar e exibir link para download do relatório
-                pdf_file = gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao)
-                with open(pdf_file, "rb") as f:
-                    st.download_button("📄 Baixar Relatório de Plágio", f, "relatorio_plagio.pdf")
-
-                # Exibir código de verificação para o usuário
-                st.success(f"Código de verificação gerado: **{codigo_verificacao}**")
-            else:
-                st.warning("Nenhuma referência encontrada.")
-        else:
-            st.error("Por favor, carregue um arquivo PDF.")
-
-    # Verificação de código
-    st.header("Verificar Autenticidade")
-    codigo_digitado = st.text_input("Digite o código de verificação:")
-
-    if st.button("Verificar Código"):
-        if 'codigo_verificacao' in st.session_state and codigo_digitado == st.session_state['codigo_verificacao']:
-            st.success("✅ Documento Autêntico e Original!")
-        else:
-            st.error("❌ Código inválido ou documento falsificado.")
