@@ -5,8 +5,6 @@ import requests
 from fpdf import FPDF
 from io import BytesIO
 import hashlib
-import random
-import string
 
 # Função para gerar um código de verificação único
 def gerar_codigo_verificacao(texto):
@@ -79,7 +77,7 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
     pdf.output(pdf_file_path)
 
-    return pdf_file_path, codigo_verificacao
+    return pdf_file_path
 
 # Interface do Streamlit
 if __name__ == "__main__":
@@ -110,11 +108,12 @@ if __name__ == "__main__":
                 plágio_medio = (sum(perc for _, perc, _ in referencias_com_similaridade[:5]) / 5) * 100
                 st.subheader(f"**Plágio médio: {plágio_medio:.2f}%**")
 
-                # Gerar código de verificação
+                # Gerar código de verificação e salvar no session_state
                 codigo_verificacao = gerar_codigo_verificacao(texto_usuario)
+                st.session_state['codigo_verificacao'] = codigo_verificacao
 
                 # Gerar e exibir link para download do relatório
-                pdf_file, _ = gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao)
+                pdf_file = gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao)
                 with open(pdf_file, "rb") as f:
                     st.download_button("📄 Baixar Relatório de Plágio", f, "relatorio_plagio.pdf")
 
@@ -128,8 +127,9 @@ if __name__ == "__main__":
     # Verificação de código
     st.header("Verificar Autenticidade")
     codigo_digitado = st.text_input("Digite o código de verificação:")
+
     if st.button("Verificar Código"):
-        if codigo_digitado == codigo_verificacao:
+        if 'codigo_verificacao' in st.session_state and codigo_digitado == st.session_state['codigo_verificacao']:
             st.success("✅ Documento Autêntico e Original!")
         else:
             st.error("❌ Código inválido ou documento falsificado.")
