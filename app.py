@@ -19,7 +19,9 @@ def salvar_email_google_sheets(nome, email, codigo_verificacao):
         "codigo": codigo_verificacao
     }
     try:
-        response = requests.post(URL_GOOGLE_SHEETS, json=dados)
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(URL_GOOGLE_SHEETS, json=dados, headers=headers)
+
         if response.text.strip() == "Sucesso":
             st.success("✅ E-mail, nome e código registrados com sucesso!")
         else:
