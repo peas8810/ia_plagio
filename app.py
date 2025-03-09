@@ -5,31 +5,24 @@ import requests
 from fpdf import FPDF
 from io import BytesIO
 import hashlib
-import gspread
-import json
-from google.oauth2.service_account import Credentials
-
-# =============================
-# 🔒 Configuração do Google Sheets
-# =============================
-SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-
-# Carregar credenciais do secrets manager
-creds_dict = json.loads(st.secrets["gcp_service_account"])
-CREDENTIALS = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
-
-# Conectar ao Google Sheets
-cliente = gspread.authorize(CREDENTIALS)
-SHEET_ID = "1xf00JCVioNn1q5oa_RQyQgXp2Qo1Hs0hUedIb7-xQRw"
-sheet = cliente.open_by_key(SHEET_ID).sheet1
+import pandas as pd  # 🔥 Nova biblioteca para salvar os dados
 
 # =============================
 # 📋 Funções Auxiliares
 # =============================
 
-# Registrar dados na planilha
-def registrar_dados(nome, email):
-    sheet.append_row([nome, email])
+# Função para salvar e-mails em um arquivo CSV
+def salvar_email_csv(nome, email):
+    dados = {"Nome": [nome], "Email": [email]}
+    try:
+        df = pd.read_csv("emails_registrados.csv")
+        novo_df = pd.DataFrame(dados)
+        df = pd.concat([df, novo_df], ignore_index=True)
+    except FileNotFoundError:
+        df = pd.DataFrame(dados)
+
+    df.to_csv("emails_registrados.csv", index=False)
+    st.success("✅ E-mail salvo com sucesso!")
 
 # Gerar um código de verificação único
 def gerar_codigo_verificacao(texto):
@@ -111,7 +104,7 @@ if __name__ == "__main__":
 
     if submit_button:
         if nome and email:
-            registrar_dados(nome, email)
+            salvar_email_csv(nome, email)
             st.success("✅ Dados registrados com sucesso! Agora você pode fazer o upload do PDF.")
         else:
             st.error("❌ Por favor, preencha todos os campos.")
