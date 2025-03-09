@@ -5,12 +5,32 @@ import requests
 from fpdf import FPDF
 from io import BytesIO
 import hashlib
+import pandas as pd  # 🔥 Biblioteca para manipulação do arquivo CSV
 
-# Função para gerar um código de verificação único
+# =============================
+# 📋 Função para Salvar E-mails no CSV
+# =============================
+def salvar_email_csv(nome, email):
+    dados = {"Nome": [nome], "Email": [email]}
+    try:
+        df = pd.read_csv("emails_registrados.csv")
+        novo_df = pd.DataFrame(dados)
+        df = pd.concat([df, novo_df], ignore_index=True)
+    except FileNotFoundError:
+        df = pd.DataFrame(dados)
+
+    df.to_csv("emails_registrados.csv", index=False)
+    st.success("✅ E-mail e nome registrados com sucesso!")
+
+# =============================
+# 🔐 Função para Gerar Código de Verificação
+# =============================
 def gerar_codigo_verificacao(texto):
     return hashlib.md5(texto.encode()).hexdigest()[:10].upper()
 
-# Função para extrair texto de um arquivo PDF
+# =============================
+# 📝 Função para Extrair Texto do PDF
+# =============================
 def extrair_texto_pdf(arquivo_pdf):
     leitor_pdf = PyPDF2.PdfReader(arquivo_pdf)
     texto = ""
@@ -18,12 +38,16 @@ def extrair_texto_pdf(arquivo_pdf):
         texto += pagina.extract_text() or ""
     return texto.strip()
 
-# Função para calcular a similaridade entre dois textos
+# =============================
+# 📊 Função para Calcular Similaridade
+# =============================
 def calcular_similaridade(texto1, texto2):
     seq_matcher = difflib.SequenceMatcher(None, texto1, texto2)
     return seq_matcher.ratio()
 
-# Função para buscar artigos na API da CrossRef
+# =============================
+# 🔎 Função para Buscar Artigos na API CrossRef
+# =============================
 def buscar_referencias_crossref(texto):
     query = "+".join(texto.split()[:10])  
     url = f"https://api.crossref.org/works?query={query}&rows=10"
@@ -45,7 +69,9 @@ def buscar_referencias_crossref(texto):
 
     return referencias
 
-# Função para gerar relatório PDF
+# =============================
+# 📄 Função para Gerar Relatório PDF
+# =============================
 def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -79,10 +105,24 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
 
     return pdf_file_path
 
-# Interface do Streamlit
+# =============================
+# 💻 Interface do Streamlit
+# =============================
 if __name__ == "__main__":
-    st.title("Verificador de Plágio - IA NICE - PEAS.Co")
+    st.title("Verificador de Plágio - IA NICE - CrossRef")
 
+    # Formulário para nome e e-mail
+    st.subheader("📋 Registro de Usuário")
+    nome = st.text_input("Nome completo")
+    email = st.text_input("E-mail")
+
+    if st.button("Salvar Dados"):
+        if nome and email:
+            salvar_email_csv(nome, email)
+        else:
+            st.warning("⚠️ Por favor, preencha todos os campos.")
+
+    # Upload do PDF após registro
     arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF", type=["pdf"])
 
     if st.button("Processar PDF"):
@@ -103,10 +143,6 @@ if __name__ == "__main__":
                 st.subheader("Top 5 Referências encontradas:")
                 for i, (titulo, perc, link) in enumerate(referencias_com_similaridade[:5], 1):
                     st.markdown(f"**{i}.** [{titulo}]({link}) - **{perc*100:.2f}%**")
-
-                # Cálculo do plágio médio
-                plágio_medio = (sum(perc for _, perc, _ in referencias_com_similaridade[:5]) / 5) * 100
-                st.subheader(f"**Plágio médio: {plágio_medio:.2f}%**")
 
                 # Gerar código de verificação e salvar no session_state
                 codigo_verificacao = gerar_codigo_verificacao(texto_usuario)
