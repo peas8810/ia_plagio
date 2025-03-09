@@ -100,13 +100,20 @@ class PDF(FPDF):
 
     def chapter_title(self, title):
         self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, title, ln=True)
+        self.cell(0, 10, self._encode_text(title), ln=True)
         self.ln(5)
 
     def chapter_body(self, body):
         self.set_font('Arial', '', 10)
-        self.multi_cell(0, 10, body)
+        self.multi_cell(0, 10, self._encode_text(body))
         self.ln()
+
+    # 🔎 Função para corrigir acentuação e caracteres especiais
+    def _encode_text(self, text):
+        try:
+            return text.encode('latin-1', 'replace').decode('latin-1')
+        except UnicodeEncodeError:
+            return ''.join(char if ord(char) < 128 else '?' for char in text)
 
 def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
     pdf = PDF()
