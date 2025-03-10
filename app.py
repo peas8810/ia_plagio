@@ -122,7 +122,7 @@ def gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verifi
 
     # Adicionando os dados do usuário no PDF
     data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    pdf.chapter_title("Dados do Usuário:")
+    pdf.chapter_title("Dados do Solicitante:")
     pdf.chapter_body(f"Nome: {nome}")
     pdf.chapter_body(f"E-mail: {email}")
     pdf.chapter_body(f"Data e Hora: {data_hora}")
