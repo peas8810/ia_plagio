@@ -142,7 +142,7 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
 if __name__ == "__main__":
     st.title("Verificador de Plágio - IA NICE - PEAS.Co")
 
-    st.subheader("📋 Registro de Usuário")
+    st.subheader("📋 Registro de Usuário - Apenas para validação")
     nome = st.text_input("Nome completo")
     email = st.text_input("E-mail")
 
