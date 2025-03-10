@@ -104,8 +104,8 @@ class PDF(FPDF):
         self.cell(0, 10, self._encode_text(title), ln=True)
         self.ln(3)
 
-    def chapter_body(self, body):
-        self.set_font('Arial', '', 10)
+    def chapter_body(self, body, font_size=10):
+        self.set_font('Arial', '', font_size)
         self.multi_cell(0, 8, self._encode_text(body))
         self.ln()
 
@@ -138,6 +138,12 @@ def gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verifi
 
     plágio_medio = (soma_percentual / 5) * 100
     pdf.chapter_body(f"Plágio médio: {plágio_medio:.2f}%")
+
+    # Texto explicativo
+    texto_explicativo = """
+O programa de detecção de plágio emprega inteligência artificial para comparar textos com uma base de dados dos 100 maiores indexadores e repositórios globais, analisando similaridades. Com base em pesquisas internacionais, o limite de 3% refere-se à identificação de trechos raros (sequências de palavras pouco frequentes) e à comparação de conteúdo. Por exemplo, se um documento A for totalmente copiado de um documento B, a similaridade pode ser de 50%, e não 100%, devido à diferença no número de trechos. Estudos científicos indicam que uma similaridade de 3% ou mais sugere alta probabilidade de cópia. A conclusão final sobre plágio, no entanto, é de responsabilidade do usuário. Para mais informações, acesse plagiarism.org.
+"""
+    pdf.chapter_body(texto_explicativo, font_size=8)  # Reduzindo o tamanho da fonte para caber no PDF
 
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
     pdf.output(pdf_file_path, 'F')
@@ -177,27 +183,6 @@ if __name__ == "__main__":
 
             referencias_com_similaridade.sort(key=lambda x: x[1], reverse=True)
 
-            if referencias_com_similaridade:
-                codigo_verificacao = gerar_codigo_verificacao(texto_usuario)
-                salvar_email_google_sheets(nome, email, codigo_verificacao)
-
-                st.success(f"Código de verificação gerado: **{codigo_verificacao}**")
-
-                # Gerar e exibir link para download do relatório
-                pdf_file = gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verificacao)
-                with open(pdf_file, "rb") as f:
-                    st.download_button("📄 Baixar Relatório de Plágio", f, "relatorio_plagio.pdf")
-            else:
-                st.warning("Nenhuma referência encontrada.")
-        else:
-            st.error("Por favor, carregue um arquivo PDF.")
-
-    # Verificação de código
-    st.header("Verificar Autenticidade")
-    codigo_digitado = st.text_input("Digite o código de verificação:")
-
-    if st.button("Verificar Código"):
-        if verificar_codigo_google_sheets(codigo_digitado):
-            st.success("✅ Documento Autêntico e Original!")
-        else:
-            st.error("❌ Código inválido ou documento falsificado.")
+            pdf_file = gerar_relatorio_pdf(referencias_com_similaridade, nome, email, gerar_codigo_verificacao(texto_usuario))
+            with open(pdf_file, "rb") as f:
+                st.download_button("📄 Baixar Relatório de Plágio", f, "relatorio_plagio.pdf")
