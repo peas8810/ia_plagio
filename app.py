@@ -5,6 +5,7 @@ import difflib
 from fpdf import FPDF
 from io import BytesIO
 import hashlib
+from datetime import datetime  # Importação para registrar data e hora
 
 # 🔗 URL da API gerada no Google Sheets
 URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbyTpbWDxWkNRh_ZIlHuAVwZaCC2ODqTmo0Un7ZDbgzrVQBmxlYYKuoYf6yDigAPHZiZ/exec"
@@ -115,10 +116,19 @@ class PDF(FPDF):
         except UnicodeEncodeError:
             return ''.join(char if ord(char) < 128 else '?' for char in text)
 
-def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
+def gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verificacao):
     pdf = PDF()
     pdf.add_page()
 
+    # Adicionando os dados do usuário no PDF
+    data_hora = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    pdf.chapter_title("📋 Dados do Usuário:")
+    pdf.chapter_body(f"Nome: {nome}")
+    pdf.chapter_body(f"E-mail: {email}")
+    pdf.chapter_body(f"Data e Hora: {data_hora}")
+    pdf.chapter_body(f"Código de Verificação: {codigo_verificacao}")
+    
+    # Referências encontradas
     pdf.chapter_title("Top 5 Referências encontradas:")
 
     soma_percentual = 0
@@ -128,8 +138,6 @@ def gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao):
 
     plágio_medio = (soma_percentual / 5) * 100
     pdf.chapter_body(f"Plágio médio: {plágio_medio:.2f}%")
-
-    pdf.chapter_body(f"Código de Verificação: {codigo_verificacao}")
 
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
     pdf.output(pdf_file_path, 'F')
@@ -176,7 +184,7 @@ if __name__ == "__main__":
                 st.success(f"Código de verificação gerado: **{codigo_verificacao}**")
 
                 # Gerar e exibir link para download do relatório
-                pdf_file = gerar_relatorio_pdf(referencias_com_similaridade, codigo_verificacao)
+                pdf_file = gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verificacao)
                 with open(pdf_file, "rb") as f:
                     st.download_button("📄 Baixar Relatório de Plágio", f, "relatorio_plagio.pdf")
             else:
