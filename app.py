@@ -102,11 +102,11 @@ class PDF(FPDF):
     def chapter_title(self, title):
         self.set_font('Arial', 'B', 12)
         self.cell(0, 10, self._encode_text(title), ln=True)
-        self.ln(5)
+        self.ln(3)
 
     def chapter_body(self, body):
         self.set_font('Arial', '', 10)
-        self.multi_cell(0, 10, self._encode_text(body))
+        self.multi_cell(0, 8, self._encode_text(body))
         self.ln()
 
     # 🔎 Função para corrigir acentuação e caracteres especiais
