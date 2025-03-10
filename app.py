@@ -193,15 +193,9 @@ if __name__ == "__main__":
         else:
             st.error("Por favor, carregue um arquivo PDF.")
 
-    # Verificação de código
-    st.header("Verificar Autenticidade")
-    codigo_digitado = st.text_input("Digite o código de verificação:")
+    # Texto explicativo ao final da página
+    st.markdown("""
+    ---
+    O programa de detecção de plágio emprega inteligência artificial para comparar textos com uma base de dados dos 100 maiores indexadores e repositórios globais, analisando similaridades. Para mais informações, acesse [plagiarism.org](https://plagiarism.org).
+    """)
 
-    if st.button("Verificar Código"):
-        if verificar_codigo_google_sheets(codigo_digitado):
-            st.success("✅ Documento Autêntico e Original!")
-        else:
-            st.error("❌ Código inválido ou documento falsificado.")
-
-
-  
