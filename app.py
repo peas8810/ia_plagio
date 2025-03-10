@@ -162,7 +162,7 @@ if __name__ == "__main__":
             st.warning("⚠️ Por favor, preencha todos os campos.")
 
     # Upload do PDF após registro
-    arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF", type=["pdf"])
+    arquivo_pdf = st.file_uploader("Faça upload de um arquivo PDF sem os nomes dos autores ou título da revista", type=["pdf"])
 
     if st.button("Processar PDF"):
         if arquivo_pdf is not None:
