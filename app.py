@@ -204,5 +204,4 @@ if __name__ == "__main__":
             st.error("❌ Código inválido ou documento falsificado.")
 
 
-    # Inteligência Artificial do Sistema de Plágio
-      st.header("Inteligência Artificial do Sistema de Plágio - O programa de detecção de plágio emprega inteligência artificial para comparar textos com uma base de dados dos 100 maiores indexadores e repositórios globais, analisando similaridades. Com base em pesquisas internacionais, o limite de 3% refere-se à identificação de trechos raros (sequências de palavras pouco frequentes) e à comparação de conteúdo. Por exemplo, se um documento A for totalmente copiado de um documento B, a similaridade pode ser de 50%, e não 100%, devido à diferença no número de trechos. Estudos científicos indicam que uma similaridade de 3% ou mais sugere alta probabilidade de cópia. A conclusão final sobre plágio, no entanto, é de responsabilidade do usuário. Para mais informações, acesse plagiarism.org.")
+  
