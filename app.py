@@ -97,7 +97,7 @@ def buscar_referencias_crossref(texto):
 class PDF(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 16)
-        self.cell(0, 10, "Relatório de Similaridade de Plágio - PlagÌA - PEAS.Co", ln=True, align='C')
+        self.cell(0, 10, "Relatório de Similaridade de Plágio - PlagIA - PEAS.Co", ln=True, align='C')
 
     def chapter_title(self, title):
         self.set_font('Arial', 'B', 12)
@@ -149,7 +149,7 @@ def gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verifi
 # 💻 Interface do Streamlit
 # =============================
 if __name__ == "__main__":
-    st.title("PlagÌA - By PEAS.Co")
+    st.title("PlagIA - PEAS.Co")
 
     st.subheader("📋 Registro de Usuário - Apenas para validação")
     nome = st.text_input("Nome completo")
