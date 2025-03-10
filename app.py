@@ -116,10 +116,6 @@ class PDF(FPDF):
         except UnicodeEncodeError:
             return ''.join(char if ord(char) < 128 else '?' for char in text)
 
-# Texto explicativo - Definição fora das funções para que possa ser utilizado na página e no PDF
-texto_explicativo = """
-O programa de detecção de plágio emprega inteligência artificial para comparar textos com uma base de dados dos 100 maiores indexadores e repositórios globais, analisando similaridades. Com base em pesquisas internacionais, o limite de 3% refere-se à identificação de trechos raros (sequências de palavras pouco frequentes) e à comparação de conteúdo. Por exemplo, se um documento A for totalmente copiado de um documento B, a similaridade pode ser de 50%, e não 100%, devido à diferença no número de trechos. Estudos científicos indicam que uma similaridade de 3% ou mais sugere alta probabilidade de cópia. A conclusão final sobre plágio, no entanto, é de responsabilidade do usuário. Para mais informações, acesse plagiarism.org.
-"""
 
 def gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verificacao):
     pdf = PDF()
@@ -143,10 +139,6 @@ def gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verifi
 
     plágio_medio = (soma_percentual / 5) * 100
     pdf.chapter_body(f"Plágio médio: {plágio_medio:.2f}%")
-
-      # Texto explicativo (PDF)
-    pdf.chapter_body(texto_explicativo, font_size=8)  # Reduzindo o tamanho da fonte para caber no PDF
-
 
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
     pdf.output(pdf_file_path, 'F')
@@ -210,3 +202,7 @@ if __name__ == "__main__":
             st.success("✅ Documento Autêntico e Original!")
         else:
             st.error("❌ Código inválido ou documento falsificado.")
+
+
+    # Inteligência Artificial do Sistema de Plágio
+      st.header("Inteligência Artificial do Sistema de Plágio - O programa de detecção de plágio emprega inteligência artificial para comparar textos com uma base de dados dos 100 maiores indexadores e repositórios globais, analisando similaridades. Com base em pesquisas internacionais, o limite de 3% refere-se à identificação de trechos raros (sequências de palavras pouco frequentes) e à comparação de conteúdo. Por exemplo, se um documento A for totalmente copiado de um documento B, a similaridade pode ser de 50%, e não 100%, devido à diferença no número de trechos. Estudos científicos indicam que uma similaridade de 3% ou mais sugere alta probabilidade de cópia. A conclusão final sobre plágio, no entanto, é de responsabilidade do usuário. Para mais informações, acesse plagiarism.org.")
