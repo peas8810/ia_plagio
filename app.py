@@ -5,11 +5,9 @@ import difflib
 from fpdf import FPDF
 from io import BytesIO
 import hashlib
-from datetime import datetime
+from datetime import datetime  # Importação para registrar data e hora
 
-# URLs das APIs
-SEMANTIC_API = "https://api.semanticscholar.org/graph/v1/paper/search"
-CROSSREF_API = "https://api.crossref.org/works"
+# 🔗 URL da API gerada no Google Sheets
 URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbyTpbWDxWkNRh_ZIlHuAVwZaCC2ODqTmo0Un7ZDbgzrVQBmxlYYKuoYf6yDigAPHZiZ/exec"
 
 # =============================
@@ -73,8 +71,8 @@ def calcular_similaridade(texto1, texto2):
 # 🔎 Função para Buscar Artigos na API CrossRef
 # =============================
 def buscar_referencias_crossref(texto):
-    query = "+".join(texto.split()[:10])  # Usa as primeiras 10 palavras para a busca
-    url = f"{CROSSREF_API}?query={query}&rows=10"
+    query = "+".join(texto.split()[:10])  
+    url = f"https://api.crossref.org/works?query={query}&rows=10"
 
     try:
         response = requests.get(url)
@@ -92,53 +90,6 @@ def buscar_referencias_crossref(texto):
         referencias.append({"titulo": titulo, "resumo": resumo, "link": link})
 
     return referencias
-
-# =============================
-# 🔎 Função para Buscar Artigos na API Semantic Scholar
-# =============================
-def buscar_referencias_semantic_scholar(texto):
-    query = "+".join(texto.split()[:10])  # Usa as primeiras 10 palavras para a busca
-    url = f"{SEMANTIC_API}?query={query}&limit=10"
-
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f"Erro ao acessar a API da Semantic Scholar: {e}")
-        return []
-
-    referencias = []
-    for item in data.get("data", []):
-        titulo = item.get("title", "Título não disponível")
-        resumo = item.get("abstract", "")
-        link = item.get("url", "Link não disponível")
-        referencias.append({"titulo": titulo, "resumo": resumo, "link": link})
-
-    return referencias
-
-# =============================
-# 🔎 Função para Buscar Referências Combinadas (CrossRef + Semantic Scholar)
-# =============================
-def buscar_referencias(texto):
-    # Busca na CrossRef
-    referencias_crossref = buscar_referencias_crossref(texto)
-    
-    # Busca na Semantic Scholar
-    referencias_semantic = buscar_referencias_semantic_scholar(texto)
-    
-    # Combina os resultados
-    referencias = referencias_crossref + referencias_semantic
-    
-    # Remove duplicatas (se houver)
-    referencias_unicas = []
-    titulos_vistos = set()
-    for ref in referencias:
-        if ref["titulo"] not in titulos_vistos:
-            referencias_unicas.append(ref)
-            titulos_vistos.add(ref["titulo"])
-    
-    return referencias_unicas
 
 # =============================
 # 📄 Função para Gerar Relatório PDF
@@ -164,6 +115,7 @@ class PDF(FPDF):
             return text.encode('latin-1', 'replace').decode('latin-1')
         except UnicodeEncodeError:
             return ''.join(char if ord(char) < 128 else '?' for char in text)
+
 
 def gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verificacao):
     pdf = PDF()
@@ -215,7 +167,7 @@ if __name__ == "__main__":
     if st.button("Processar PDF"):
         if arquivo_pdf is not None:
             texto_usuario = extrair_texto_pdf(arquivo_pdf)
-            referencias = buscar_referencias(texto_usuario)  # Usa a nova função combinada
+            referencias = buscar_referencias_crossref(texto_usuario)
 
             referencias_com_similaridade = []
             for ref in referencias:
@@ -251,7 +203,8 @@ if __name__ == "__main__":
         else:
             st.error("❌ Código inválido ou documento falsificado.")
 
-    # Texto explicativo ao final da página
+
+ # Texto explicativo ao final da página
     st.markdown("""
     ---
     Nosso avançado programa de detecção de plágio utiliza inteligência artificial para comparar textos com uma ampla base de dados composta pelos 100 maiores indexadores e repositórios globais, analisando cuidadosamente as similaridades encontradas. Com base em estudos internacionais, considera-se que uma taxa de similaridade de 3% ou mais indica uma alta concentração de trechos raros — ou seja, sequências de palavras pouco frequentes que apontam para uma possível cópia. Para ilustrar o processo de análise documental, imagine que um arquivo A tenha sido integralmente copiado de outro arquivo B. Ainda assim, a similaridade pode ser igual ou inferior a 50%, e não 100%, devido à variação na quantidade de trechos considerados na comparação. Pesquisas demonstram que uma taxa média de 3% ou mais costuma indicar uma elevada incidência de termos semelhantes, configurando, assim, uma possível ocorrência de plágio. É importante ressaltar que a avaliação final sobre a presença de plágio cabe sempre aos autores e responsáves pelo conteúdo.Para mais informações sobre práticas de integridade acadêmica, acesse [plagiarism.org](https://plagiarism.org). Powered By - PEAS.Co
