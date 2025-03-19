@@ -143,8 +143,11 @@ def gerar_relatorio_pdf(referencias_com_similaridade, nome, email, codigo_verifi
     pdf_file_path = "/tmp/relatorio_plagio.pdf"
     pdf.output(pdf_file_path, 'F')
 
-# Referências encontradas
-    pdf.chapter_title("Site para conferir o código de validação: https://iaplagio-wtwg4f3x2ejse4rspbqe2s.streamlit.app/")
+
+    class PDF(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 16)
+        self.cell(0, 10, "Site para conferir o código de validação: https://iaplagio-wtwg4f3x2ejse4rspbqe2s.streamlit.app/", ln=True, align='C')
     
     return pdf_file_path
 
