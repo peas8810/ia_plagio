@@ -224,5 +224,5 @@ st.components.v1.iframe("https://pay.hotmart.com/U99934745U?off=y2b5nihy&hotfeat
 
 # Exibição de imagem para propaganda (substitua a URL pela sua imagem)
 image_url = "https://static-media.hotmart.com/cu0MontuJsAjZltv6bttoE1zxbI=/filters:quality(100):format(webp)/klickart-prod/uploads/media/file/9314924/imagem_-_proativa.jpg"
-st.image(image_url, caption="Anuncie aqui", use_container_width=True)
+
       
