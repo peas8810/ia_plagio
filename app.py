@@ -219,7 +219,7 @@ if __name__ == "__main__":
     # --- Seção de Propaganda ---
     st.subheader("Publicidade - Anuncie Aqui - Envie email para peas8810@gmail.com")
     # Exibição de imagem para propaganda (substitua a URL pela sua imagem)
-    image_url = "https://static-media.hotmart.com/cu0MontuJsAjZltv6bttoE1zxbI=/filters:quality(100):format(webp)/klickart-prod/uploads/media/file/9314924/imagem_-_proativa.jpg"
+    image_url = "https://peas8810.hotmart.host/product-page-1f2f7f92-949a-49f0-887c-5fa145e7c05d"
     st.image(image_url, caption="Anuncie aqui", use_container_width=True)
     
     # Incorporação de website (exemplo de iframe para propaganda)
