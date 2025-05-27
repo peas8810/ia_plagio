@@ -218,10 +218,10 @@ if __name__ == "__main__":
 
     # --- Seção de Propaganda ---
 
-     # Incorporação de website (exemplo de iframe para propaganda)
-    s = pyshorteners.Shortener()
-    short = s.tinyurl.short("https://peas8810.hotmart.host/product-page-1f2f7f92-949a-49f0-887c-5fa145e7c05d")
-    st.markdown(f"[Técnica PROATIVA]({short})")
+    st.markdown(
+    "### [Técnica PROATIVA: Domine a Criação de Comandos Poderosos na IA e gere produtos monetizáveis]"
+    "(https://peas8810.hotmart.host/product-page-1f2f7f92-949a-49f0-887c-5fa145e7c05d)"
+    )
 
     st.subheader("Técnica PROATIVA: Domine a Criação de Comandos Poderosos na IA e gere produtos monetizáveis  - https://peas8810.hotmart.host/product-page-1f2f7f92-949a-49f0-887c-5fa145e7c05d")
     # Exibição de imagem para propaganda (substitua a URL pela sua imagem)
