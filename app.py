@@ -219,9 +219,9 @@ if __name__ == "__main__":
     # --- Seção de Propaganda ---
     st.subheader("Publicidade - Anuncie Aqui - Envie email para peas8810@gmail.com")
     # Exibição de imagem para propaganda (substitua a URL pela sua imagem)
-    image_url = "https://peas8810.hotmart.host/product-page-1f2f7f92-949a-49f0-887c-5fa145e7c05d"
+    image_url = "https://static-media.hotmart.com/cu0MontuJsAjZltv6bttoE1zxbI=/filters:quality(100):format(webp)/klickart-prod/uploads/media/file/9314924/imagem_-_proativa.jpg"
     st.image(image_url, caption="Anuncie aqui", use_container_width=True)
     
     # Incorporação de website (exemplo de iframe para propaganda)
     st.markdown("### Anuncie seu website")
-    st.components.v1.iframe("https://peas8810.hotmart.host/product-page-1f2f7f92-949a-49f0-887c-5fa145e7c05d", height=250)
+    st.components.v1.iframe("https://pay.hotmart.com/U99934745U?off=y2b5nihy&hotfeature=51&_hi=eyJjaWQiOiIxNzQ4Mjk4OTUxODE2NzQ2NTc3ODk4OTY0NzUyNTAwIiwiYmlkIjoiMTc0ODI5ODk1MTgxNjc0NjU3Nzg5ODk2NDc1MjUwMCIsInNpZCI6ImM4OTRhNDg0MzJlYzRhZTk4MTNjMDJiYWE2MzdlMjQ1In0=.1748375599003&bid=1748375601381", height=250)
