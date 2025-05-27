@@ -226,5 +226,4 @@ if __name__ == "__main__":
     # Exibição de imagem para propaganda (substitua a URL pela sua imagem)
     image_url = "https://static-media.hotmart.com/cu0MontuJsAjZltv6bttoE1zxbI=/filters:quality(100):format(webp)/klickart-prod/uploads/media/file/9314924/imagem_-_proativa.jpg"
     st.image(image_url, caption="Anuncie aqui", use_container_width=True)
-    
-   
+      
